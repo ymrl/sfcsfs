@@ -29,14 +29,13 @@ module SFCSFS
     end
     def get_plans_page_of_this_semester
       q = self.query_values.merge("mode"=>1).to_a.map{|e|e.join('=')}.join('&')
-      get("#{self.base_url}/sfc-sfs/portal_s/s01.cgi?#{q}")
+      get("#{self.base_url}/sfc-sfs/portal_s/s02.cgi?#{q}")
     end
     def get_plans_page_of_next_semester
       q = self.query_values.merge("mode"=>2).to_a.map{|e|e.join('=')}.join('&')
       get("#{self.base_url}/sfc-sfs/portal_s/s02.cgi?#{q}")
     end
-    def get_class_list_of_next_semester
-      get_plans_page_of_next_semester
+    def get_class_list_of_plans_page
       self.page.iframes.first.click
       list = []
       self.page.links_with(:href=>/class_list\.cgi\?/).each do |link|
@@ -50,6 +49,14 @@ module SFCSFS
         end
       end
       return list
+    end
+    def get_class_list_of_next_semester
+      get_plans_page_of_next_semester
+      return get_class_list_of_plans_page
+    end
+    def get_class_list_of_this_semester
+      get_plans_page_of_this_semester
+      return get_class_list_of_plans_page
     end
 
     def my_schedule
@@ -66,10 +73,20 @@ module SFCSFS
         q.delete("lang")
         n = e
         while (n = n.next).name != 'text';next;end
+
+        day = 0
+        td = e.parent
+        while td.name == td
+          day += 1
+          td = td.previous
+        end
+        period = 0
+        tr = e.parent.parent
+        
         Lecture.new(
           e.text.encode(Encoding::UTF_8),
           n.text.encode(Encoding::UTF_8).gsub(/[()\s　]/,''),
-          :mode => mode, :query => q)
+          :mode => mode, :query => q,:day=>day)
       end
     end
     def get_lecture_detail(lecture)
@@ -79,7 +96,18 @@ module SFCSFS
         u = self.page.uri + e.uri
         lecture.homeworks.push  Homework.new(t,u)
       end
+      encoded = self.page.body.force_encoding(self.page.encoding).encode(Encoding::UTF_8,:invalid=>:replace, :undef=>:replace)
+      if m = encoded.match(/履修希望者数：(\d+)/)
+        lecture.applicants = m[1].to_i
+      end
+      if m = encoded.match(/受入学生数（予定）：約 (\d+) 人/)
+        lecture.limit = m[1].to_i
+      end
+
       return lecture
+
+
+
     end
     def get_lecture_detail_page(lecture)
       a = lecture.class_top_url_attributes

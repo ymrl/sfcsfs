@@ -2,13 +2,17 @@
 module SFCSFS
   class Lecture
     def initialize(title,instructor,hash)
-      config = { :mode => nil , :query => nil,:homeworks => [],:add_list_url=>nil}.merge(hash)
+      config = { :mode => nil , :query => nil,:homeworks => [],:add_list_url=>nil,:day=>nil,:period=>nil}.merge(hash)
       self.title = title.gsub(/^[　\s]*/,'').gsub(/[　\s]*$/,'')
       self.instructor = instructor.gsub(/[()\s　]/,'')
       self.mode = config[:mode]
       self.query = config[:query]
       self.homeworks = config[:homeworks]
       self.add_list_url = config[:add_list_url]
+      self.day = config[:day]
+      self.period = config[:period]
+      self.applicants = config[:applicants]
+      self.limit = config[:limit]
     end
     def class_top_url_attributes
       mode = 'student'
@@ -30,6 +34,6 @@ module SFCSFS
     def get_stay_input_page(agent)
       agent.get_stay_input_page(self)
     end
-    attr_accessor :title,:instructor,:mode,:query,:homeworks,:add_list_url
+    attr_accessor :title,:instructor,:mode,:query,:homeworks,:add_list_url,:day,:period,:applicants,:limit
   end
 end

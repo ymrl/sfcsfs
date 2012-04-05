@@ -33,6 +33,19 @@ describe 'Agent' do
       end
     end
   end
+  it '今学期プランページへのアクセス' do
+    @agent.get_plans_page_of_this_semester
+  end
+
+  context '今学期プランの履修' do
+    it '科目一覧の取得' do
+      list = @agent.get_class_list_of_this_semester
+      list.each do |e|
+        e.should be_instance_of(SFCSFS::Lecture)
+        e.add_list_url.should be_true
+      end
+    end
+  end
 
 
   context 'my時間割にアクセスする' do
