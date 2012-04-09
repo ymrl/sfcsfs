@@ -1,125 +1,178 @@
 #coding:utf-8
-require 'mechanize'
+require 'hpricot'
+require 'uri'
+require 'net/https'
 require 'addressable/uri'
 
 module SFCSFS
+  REDIRECT_LIMIT = 5
   def SFCSFS.login(account,passwd)
     return Agent.login(account,passwd)
   end
-  class Agent < Mechanize
+  class Agent
+    def inspect
+      "#{self.class} #{@id}"
+    end
+
+    def request uri,method=:get,data={}
+      ret = nil
+      count = 0
+      while count < REDIRECT_LIMIT and !ret or Net::HTTPRedirection === ret
+        uri = (URI::Generic === uri ? uri : URI.parse(uri))
+        req = nil
+        uri += '/' if uri.path == ''
+        path = uri.path
+        path += "?#{uri.query}" if uri.query && uri.query.length > 0
+        if method.to_sym == :post
+          req = Net::HTTP::Post.new(path)
+        else
+          req = Net::HTTP::Get.new(path)
+        end
+        req.set_form_data(data) if data.length > 0
+        http = Net::HTTP.new(uri.host,uri.port)
+        http.use_ssl = true if uri.scheme == 'https'
+        http.start{|http| ret = http.request(req)}
+        @uri = uri
+        uri = ret['location'] if ret['location']
+        count += 0
+      end
+      if count >= REDIRECT_LIMIT
+        raise TooManyRedirectionException
+      end
+      return ret
+    end
+    def request_parse uri,method=:get,data={}
+      uri = (URI::Generic === uri ? uri : URI.parse(uri))
+      r = request(uri,method,data)
+      @doc = Hpricot(r.body.force_encoding(Encoding::EUC_JP).encode(Encoding::UTF_8,:invalid=>:replace,:undef=>:replace)) 
+      if meta = @doc.search('meta["http-equiv"="refresh"]')
+        match = meta.attr('content').match(/url=(.*)$/)
+        if match
+          request_parse(@uri+match[1])
+        end
+      end
+      return @doc
+    end
+
     def initialize
-      super
-      self.follow_meta_refresh = true
-      self.max_history = 1
-      self.query_values = nil
-      self.base_url = nil
+      @uri  = nil
+      @doc  = nil
+      @id   = nil
+      @base_uri = nil
+      @type = nil
+
       return self
     end
-    def Agent.login(account,passwd)
+
+    def Agent.login(account,passwd,options={})
       a = Agent.new
-      a.get('https://gc.sfc.keio.ac.jp/sfc-sfs/')
-      form = a.page.forms.first
-      form['u_login'] = account
-      form['u_pass']  = passwd
-      form.submit
-      u = a.page.uri
-      a.query_values = Addressable::URI.parse(u).query_values 
-      a.base_url = "#{u.scheme}://#{u.host}"
+      doc = a.request_parse('https://gc.sfc.keio.ac.jp/sfc-sfs/')
+      action = doc.search('form').attr('action')
+      a.request_parse(action,:post,:u_login => account, :u_pass => passwd)
+      query_values = Addressable::URI.parse(a.uri).query_values 
+      a.id = query_values['id']
+      a.type = query_values['type']
+
+      if options[:vu9]
+        a.base_uri = URI.parse('https://vu9.sfc.keio.ac.jp/')
+      else
+        a.base_uri = a.uri + '/'
+      end
+
       return a
     end
+
+    def plan_of_this_semester
+      get_plans_page_of_this_semester
+      plan_list_from_plans_page
+    end
+
+    def plan_of_next_semester
+      get_plans_page_of_next_semester
+      plan_list_from_plans_page
+    end
+
+    def all_classes_of_this_semester
+      get_plans_page_of_this_semester
+      all_classes_from_plans_page
+    end
+
+    def all_classes_of_next_semester
+      get_plans_page_of_next_semester
+      all_classes_from_plans_page
+    end
+
+
     def get_plans_page_of_this_semester
-      q = self.query_values.merge("mode"=>1).to_a.map{|e|e.join('=')}.join('&')
-      get("#{self.base_url}/sfc-sfs/portal_s/s02.cgi?#{q}")
+      outer_uri = @base_uri + 
+        "/sfc-sfs/portal_s/s02.cgi?id=#{@id}&type=#{@type}&mode=1&lang=ja"
+      request_parse(outer_uri)
+      inner_uri = outer_uri + @doc.search('iframe').attr('src')
+      request_parse(inner_uri)
     end
+
     def get_plans_page_of_next_semester
-      q = self.query_values.merge("mode"=>2).to_a.map{|e|e.join('=')}.join('&')
-      get("#{self.base_url}/sfc-sfs/portal_s/s02.cgi?#{q}")
+      outer_uri = @base_uri + 
+        "/sfc-sfs/portal_s/s02.cgi?id=#{@id}&type=#{@type}&mode=2&lang=ja"
+      request_parse(outer_uri)
+      inner_uri = outer_uri + @doc.search('iframe').attr('src')
+      request_parse(inner_uri)
     end
-    def get_class_list_of_plans_page
-      self.page.iframes.first.click
+
+    def all_classes_from_plans_page
       list = []
-      self.page.links_with(:href=>/class_list\.cgi\?/).each do |link|
-        link.click
-        self.page.links_with(:href=>/class_summary_by_kamoku\.cgi/).each do |lec|
-          title = lec.text
-          instructor = lec.node.next.text.gsub(/^\((.*)\).*$/,'\\1')
-          add_list_url = self.page.uri + lec.node.parent.search('a[href^="plan_list.cgi"]').first.attributes['href'].value
-          list.push Lecture.new(title,instructor,
-                                :add_list_url => add_list_url)
+      uri = @uri
+      @doc.search('a').to_a.delete_if{|e| !e.attributes['href'].match(/class_list\.cgi/)}.each do |e|
+        request_parse uri+e.attributes['href']
+        @doc.search('a').to_a.delete_if{|e| !e.attributes['href'].match(/class_summary_by_kamoku\.cgi/)}.each do |f|
+          title = f.children.first.to_s
+          instructor = f.next.to_s.gsub(/[()\s　…\[\]]/,'')
+          add = f.parent.search('a').last
+          q = Addressable::URI.parse(add.attributes['href']).query_values 
+          ks = q['ks']
+          yc = q['yc']
+          reg = q['reg']
+          term = q['term']
+          list.push Lecture.new(self,title,instructor,:ks=>ks,:yc=>yc,:reg=>reg,:term=>term)
         end
       end
       return list
     end
-    def get_class_list_of_next_semester
-      get_plans_page_of_next_semester
-      return get_class_list_of_plans_page
-    end
-    def get_class_list_of_this_semester
-      get_plans_page_of_this_semester
-      return get_class_list_of_plans_page
+
+    def plan_list_from_plans_page
+      @doc.search('a').to_a.delete_if{|e| !e.attributes['href'].match(/syll_view.cgi/)}.map do |e|
+        href = e.attributes['href']
+        q = Addressable::URI.parse(href).query_values 
+        ks = q['ks']
+        yc = q['yc']
+        title = e.children.first.to_s
+        Lecture.new(self,title,nil,:ks=>ks,:yc=>yc)
+      end
     end
 
     def my_schedule
-      q = self.query_values.merge("mode"=>1).to_a.map{|e|e.join('=')}.join('&')
-      get("#{self.base_url}/sfc-sfs/portal_s/s01.cgi?#{q}")
-      self.page.iframes.first.click
-      self.page.search('table a').to_a.delete_if{|e|
-        !e.attributes["href"].text.match(/sfs_class/)
+      outer_uri = @base_uri +
+        "/sfc-sfs/portal_s/s01.cgi?id=#{@id}&type=#{@type}&mode=1&lang=ja"
+      request_parse outer_uri
+      inner_uri = @uri + @doc.search('iframe').attr('src')
+      request_parse inner_uri
+
+      @doc.search('table a').to_a.delete_if{|e|
+        !e.attributes["href"].match(/sfs_class/)
       }.map do |e|
-        href = e.attributes["href"].text
+        href = e.attributes["href"]
         mode = href.match(/faculty/) ? 'faculty' : 'student'
         q = Addressable::URI.parse(href).query_values 
-        q.delete("id")
-        q.delete("lang")
-        n = e
-        while (n = n.next).name != 'text';next;end
-
-        day = 0
-        td = e.parent
-        while td.name == td
-          day += 1
-          td = td.previous
-        end
-        period = 0
-        tr = e.parent.parent
-        
-        Lecture.new(
-          e.text.encode(Encoding::UTF_8),
-          n.text.encode(Encoding::UTF_8).gsub(/[()\s　]/,''),
-          :mode => mode, :query => q,:day=>day)
+        ks = q['ks']
+        yc = q['yc']
+        title = e.children.first.to_s
+        instructor = e.next.next.to_s.gsub(/[()\s　]/,'')
+        Lecture.new(self,title,instructor, :mode => mode, :ks=>ks, :yc=>yc)
       end
     end
-    def get_lecture_detail(lecture)
-      get_lecture_detail_page(lecture)
-      self.page.links_with(:href=>%r{/report/report\.cgi\?}).each do |e|
-        t = e.text.gsub(/^「(.*)」$/,'\\1')
-        u = self.page.uri + e.uri
-        lecture.homeworks.push  Homework.new(t,u)
-      end
-      encoded = self.page.body.force_encoding(self.page.encoding).encode(Encoding::UTF_8,:invalid=>:replace, :undef=>:replace)
-      if m = encoded.match(/履修希望者数：(\d+)/)
-        lecture.applicants = m[1].to_i
-      end
-      if m = encoded.match(/受入学生数（予定）：約 (\d+) 人/)
-        lecture.limit = m[1].to_i
-      end
 
-      return lecture
-
-
-
-    end
-    def get_lecture_detail_page(lecture)
-      a = lecture.class_top_url_attributes
-      q = self.query_values.merge(a[:query]).to_a.map{|e|e.join('=')}.join('&')
-      get("#{self.base_url}#{a[:path]}?#{q}")
-    end
-    def get_stay_input_page(lecture)
-      get_lecture_detail_page(lecture)
-      self.page.forms.first.submit
-      return self
-    end
-
-    attr_accessor :login,:query_values,:base_url
+    attr_accessor :login,:query_values,:base_uri,:doc,:id,:uri,:type
+  end
+  class TooManyRedirectionException < Exception
   end
 end
