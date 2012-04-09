@@ -1,18 +1,18 @@
 #coding:utf-8
 module SFCSFS
   class Lecture
-    def initialize(agent,title,instructor,hash = {})
-      config = {:homeworks => [],:period=>[]}.merge(hash)
+    def initialize(agent,title,instructor,config={})
       @agent = agent
       @title = title
       @instructor = instructor
+      @instructors = config[:instructors] || []
       @mode  = config[:mode]
       @yc    = config[:yc]
       @ks    = config[:ks]
       @reg   = config[:reg]
       @term  = config[:term]
-      @homeworks = config[:homeworks]
-      @period = config[:period]
+      @homeworks = config[:homeworks] || []
+      @periods = config[:periods] || []
       @applicants = config[:applicants]
       @limit = config[:limit]
     end
@@ -47,6 +47,15 @@ module SFCSFS
     def get_detail
       uri = @agent.base_uri + class_top_path
       doc = @agent.request_parse(uri)
+      @title = doc.search('h3.one').first.children.first.to_s.gsub(/[\s　]/,'')
+      @instructors += doc.search('h3.one > a').to_a.delete_if{|e| !e.attributes['href'].match(/profile\.cgi/)}.map{|e|e.children.first.to_s}
+      @instructors.uniq!
+      term = doc.search('h3.one .ja').text.match(/時限：(\d{4})年([春秋])学期(.*)$/)
+      if term
+        @term = "#{term[1]}#{term[2] == '春' ? 's' : 'f'}"
+        @periods += term[3].gsub(/\s/,'').split(/,/)
+        @periods.uniq!
+      end
       page = doc.to_s
       #a.doc.search('a').to_a.delete_if{|e|!e.attributes['href'].match(%r{/report/report\.cgi\?})}.each do |e|
       #  # TODO : Homeworks Func
@@ -87,7 +96,7 @@ module SFCSFS
       @agent.request(uri)
     end
 
-    attr_accessor :title,:instructor,:mode,:yc,:ks,:homeworks,:add_list_url,:period,:applicants,:limit,:reg,:term
+    attr_accessor :title,:instructor,:mode,:yc,:ks,:homeworks,:add_list_url,:periods,:applicants,:limit,:reg,:term
   end
 
   class NotEnoughParamsException < Exception
