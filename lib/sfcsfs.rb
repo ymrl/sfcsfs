@@ -10,5 +10,5 @@ require directory+'/sfcsfs/agent.rb'
 
 
 module SFCSFS
-  VERSION = '0.0.1'
+  VERSION = '0.1.0'
 end
