@@ -79,7 +79,25 @@ module SFCSFS
       uri = @agent.base_uri + stay_input_path
       @agent.request_parse(uri)
     end
-
+    def submit_stay_form data
+      param = {}
+      uri = @agent.base_uri + '/sfc-sfs/sfs_class/stay/stay_input.cgi'
+      unless @yc && @ks && @aget.id
+        raise NotEnoughParamsException
+      end
+      param[:stay_phone]      = data[:stay_phone]
+      param[:stay_p_phone]    = data[:stay_p_phone]
+      param[:stay_time]       = data[:stay_time]
+      param[:selectRoom]      = data[:selectRoom]
+      param[:selectFloor]     = data[:selectFloor]
+      param[:stay_room_other] = data[:stay_room_other]
+      param[:stay_reason]     = data[:stay_reason]
+      param[:mode] = 'submit'
+      param[:yc] = @yc
+      param[:ks] = @ks
+      param[:enc_id] = @agent.id
+      request uri,:post,data
+    end
     def add_to_plan
       unless @reg && @yc && @ks && @agent.id && @term
         raise NotEnoughParamsException
