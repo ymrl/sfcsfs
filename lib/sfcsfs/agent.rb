@@ -124,11 +124,15 @@ module SFCSFS
       uri = @uri
       @doc.search('a').to_a.delete_if{|e| !e.attributes['href'].match(/class_list\.cgi/)}.each do |e|
         request_parse uri+e.attributes['href']
-        @doc.search('a').to_a.delete_if{|e| !e.attributes['href'].match(/class_summary_by_kamoku\.cgi/)}.each do |f|
-          title = f.children.first.to_s
-          instructor = f.next.to_s.gsub(/[()\s　…\[\]]/,'')
-          add = f.parent.search('a').last
-          q = Addressable::URI.parse(add.attributes['href']).query_values 
+        @doc.search('a').to_a.delete_if{|e| !e.attributes['href'].match(/plan_list\.cgi/)}.each do |e|
+          str = e.parent.innerText
+          title = nil
+          instructor = nil
+          if match = str.match(/：\d+\(.+?\) … (.+?) \((.+?)\)…/)
+            title = match[1]
+            instructor = match[2]
+          end
+          q = Addressable::URI.parse(e.attributes['href']).query_values 
           ks = q['ks']
           yc = q['yc']
           reg = q['reg']
