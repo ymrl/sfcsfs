@@ -83,11 +83,11 @@ class SFCSFS::Agent
       !e.attr('href').match(/sfs_class/)
     }.map do |e|
       href = e.attr("href")
-      mode = href.match(/faculty/) ? 'faculty' : 'student'
       q = Addressable::URI.parse(href).query_values 
       option ={}
       option[:ks] = q['ks']
       option[:yc] = q['yc']
+      option[:mode] = href.match(/faculty/) ? 'faculty' : 'student'
       title = e.children.first.to_s
       title.gsub!(/\[([^\]]*)\]$/){option[:place]=$1;""}
       instructor = e.next.next.to_s.gsub(/[()\s　]/,'')
