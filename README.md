@@ -1,6 +1,6 @@
-# Sfcsfs
+# SFCSFS
 
-TODO: Write a gem description
+SFCSFS is a SFC-SFS Scraping Library. SFC-SFS is an internal website for Keio Univ. Shounan Fujisawa Campus.
 
 ## Installation
 
@@ -18,7 +18,21 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+    config = Pit.get("sfcsfs", :require => {
+        :account  => "your CNS account",
+        :password => "your CNS password"
+    })
+
+    # Login to SFC-SFS
+    agent = SFCSFS.login(config[:account],config[:password])
+
+    # Get all classes of this semester and shows
+    list = agent.all_classes_of_this_semester
+
+    # Show name of these
+    list.each do |e|
+      puts e.title
+    end
 
 ## Contributing
 
