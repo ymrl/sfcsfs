@@ -72,7 +72,7 @@ module SFCSFS
     def student_selection_list
       uri = @agent.base_uri + student_selection_path
       doc = @agent.request_parse(uri)
-      return doc.search('tr[@bgcolor="#efefef"] td').map{|e| e.children.first.to_s}.delete_if{|e| !e.match(/^\d{8}/)}
+      return doc.search('tr[bgcolor="#efefef"] td').map{|e| e.children.first.to_s}.delete_if{|e| !e.match(/^\d{8}/)}
     end
 
     def get_stay_input_page
