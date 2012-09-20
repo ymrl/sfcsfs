@@ -27,7 +27,16 @@ Or install it yourself as:
     agent = SFCSFS.login(config[:account],config[:password])
 
     # Get all classes of this semester and shows
+		# It takes several minutes...
     list = agent.all_classes_of_this_semester
+
+    # Show name of these
+    list.each do |e|
+      puts e.title
+    end
+
+    # Get your current weekly schedule
+    list = agent.my_schedule
 
     # Show name of these
     list.each do |e|
