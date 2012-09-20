@@ -51,20 +51,20 @@ module SFCSFS
       @title = doc.search('h3.one').first.children.first.to_s.gsub(/[\s　]/,'')
       @instructors += doc.search('h3.one > a[href]').to_a.delete_if{|e| !e.attr('href').match(/profile\.cgi/)}.map{|e|e.children.first.to_s}
       @instructors.uniq!
-      term = doc.search('h3.one .ja').text.match(/時限：(\d{4})年([春秋])学期(.*)$/)
+      term = doc.search('h3.one .ja').text.match(/(\d{4})年度([春秋])学期(.*)$/u)
       if term
         @term = "#{term[1]}#{term[2] == '春' ? 's' : 'f'}"
-        @periods += term[3].gsub(/\s/,'').split(/,/)
+        @periods += term[3].gsub(/\s/,'').split(/\//)
         @periods.uniq!
       end
       page = doc.to_s
       #a.doc.search('a').to_a.delete_if{|e|!e.attributes['href'].match(%r{/report/report\.cgi\?})}.each do |e|
       #  # TODO : Homeworks Func
       #end
-      if m = page.match(/履修希望者数：(\d+)/)
+      if m = page.match(/履修希望者数：(\d+)/u)
         @applicants = m[1].to_i
       end
-      if m = page.match(/受入学生数（予定）：約 (\d+) 人/)
+      if m = page.match(/受入学生数（予定）：約 (\d+) 人/u)
         @limit = m[1].to_i
       end
       return self
