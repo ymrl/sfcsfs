@@ -76,7 +76,7 @@ class SFCSFS::Agent
     outer_uri = @base_uri +
       "/sfc-sfs/portal_s/s01.cgi?id=#{@id}&type=#{@type}&mode=1&lang=ja"
     request_parse outer_uri
-    inner_uri = @uri + @doc.search('iframe').attr('src')
+    inner_uri = @uri + @doc.search('iframe').attr('src').to_s
     request_parse inner_uri
 
     @doc.search('table a[href]').to_a.delete_if{|e|

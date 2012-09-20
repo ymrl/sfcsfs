@@ -15,6 +15,7 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
   gem.version       = SFCSFS::VERSION
   gem.add_dependency('nokogiri','~> 1.5.5')
+  gem.add_dependency('addressable','~> 2.2.8')
   gem.add_development_dependency('rspec', '~> 2.10.0')
   gem.add_development_dependency('rake')
   gem.add_development_dependency('pit')
