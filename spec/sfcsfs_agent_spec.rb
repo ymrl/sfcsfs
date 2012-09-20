@@ -61,23 +61,23 @@ describe 'Agent' do
         e.homeworks.should be_instance_of(Array)
       end
     end
-    it 'Lectureから残留届けページヘ行ける' do
-      @lectures.each {|e| e.get_stay_input_page(@agent)}
-    end
+    #it 'Lectureから残留届けページヘ行ける' do
+    #  @lectures.each {|e| e.get_stay_input_page(@agent)}
+    #end
     it 'Lecture#instructorが括弧とか\sとか含まない' do
       @lectures.each { |e| (e.instructor.match(/[()（）\s]/)).should be_false }
     end
-    it 'Lectureそれぞれに詳細情報を取得できる' do
-      @lectures.each do |e| e.get_detail() 
-        e.homeworks.each do |h|
-          h.should be_instance_of(SFCSFS::Homework)
-          h.title.should have_at_least(1).items
-          h.title.match(/^「/).should be_false
-          h.title.match(/」$/).should be_false
-          h.url.match(%r{.*\.sfc\.keio\.ac\.jp/sfc-sfs/sfs_class/report/report.cgi\?}).should be_true
-        end
-      end
-    end
+    #it 'Lectureそれぞれに詳細情報を取得できる' do
+    #  @lectures.each do |e| e.get_detail() 
+    #    e.homeworks.each do |h|
+    #      h.should be_instance_of(SFCSFS::Homework)
+    #      h.title.should have_at_least(1).items
+    #      h.title.match(/^「/).should be_false
+    #      h.title.match(/」$/).should be_false
+    #      h.url.match(%r{.*\.sfc\.keio\.ac\.jp/sfc-sfs/sfs_class/report/report.cgi\?}).should be_true
+    #    end
+    #  end
+    #end
   end
 end
 
