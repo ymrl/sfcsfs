@@ -48,7 +48,7 @@ module SFCSFS
       uri = @agent.base_uri + class_top_path
       doc = @agent.request_parse(uri)
       @title = doc.search('h3.one').first.children.first.to_s.gsub(/[\s　]/,'')
-      @instructors += doc.search('h3.one > a').to_a.delete_if{|e| !e.attributes['href'].match(/profile\.cgi/)}.map{|e|e.children.first.to_s}
+      @instructors += doc.search('h3.one > a[href]').to_a.delete_if{|e| !e.attr('href').match(/profile\.cgi/)}.map{|e|e.children.first.to_s}
       @instructors.uniq!
       term = doc.search('h3.one .ja').text.match(/時限：(\d{4})年([春秋])学期(.*)$/)
       if term

@@ -6,7 +6,9 @@ directory = File.expand_path(File.dirname(__FILE__))
 
 require directory+'/sfcsfs/lecture.rb'
 require directory+'/sfcsfs/homework.rb'
+require directory+'/sfcsfs/util.rb'
 require directory+'/sfcsfs/agent.rb'
+require directory+'/sfcsfs/agent/navigations.rb'
 
 
 module SFCSFS
