@@ -85,11 +85,13 @@ class SFCSFS::Agent
       href = e.attr("href")
       mode = href.match(/faculty/) ? 'faculty' : 'student'
       q = Addressable::URI.parse(href).query_values 
-      ks = q['ks']
-      yc = q['yc']
+      option ={}
+      option[:ks] = q['ks']
+      option[:yc] = q['yc']
       title = e.children.first.to_s
+      title.gsub!(/\[([^\]]*)\]$/){option[:place]=$1;""}
       instructor = e.next.next.to_s.gsub(/[()\s　]/,'')
-      SFCSFS::Lecture.new(self,title,instructor, :mode => mode, :ks=>ks, :yc=>yc)
+      SFCSFS::Lecture.new(self,title,instructor,option)
     end
   end
 end

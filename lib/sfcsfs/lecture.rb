@@ -15,6 +15,7 @@ module SFCSFS
       @periods = config[:periods] || []
       @applicants = config[:applicants]
       @limit = config[:limit]
+      @place = config[:place]
     end
     def inspect
       "#{self.class} \"#{@title}\" \"#{@instructor}\" #{@yc} #{@ks}"
@@ -114,7 +115,9 @@ module SFCSFS
       @agent.request(uri)
     end
 
-    attr_accessor :title,:instructor,:mode,:yc,:ks,:homeworks,:add_list_url,:periods,:applicants,:limit,:reg,:term
+    attr_accessor :title,:instructor,:mode,:yc,:ks,:homeworks,
+                  :add_list_url,:periods,:applicants,:limit,
+                  :reg,:term, :place
   end
 
   class NotEnoughParamsException < Exception
