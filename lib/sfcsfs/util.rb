@@ -8,7 +8,7 @@ module SFCSFS
       return str.force_encoding(Encoding::EUC_JP).encode(Encoding::UTF_8,:invalid=>:replace,:undef=>:replace)
     else
       require 'kconv'
-      return Kconv.kconv(str,Kconv::EUC,Kconv::UTF8)
+      return Kconv.kconv(str,Kconv::UTF8,Kconv::EUC)
     end
   end
 end

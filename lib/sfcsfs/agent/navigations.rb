@@ -24,7 +24,7 @@ class SFCSFS::Agent
     outer_uri = @base_uri + 
       "/sfc-sfs/portal_s/s02.cgi?id=#{@id}&type=#{@type}&mode=1&lang=ja"
     request_parse(outer_uri)
-    inner_uri = outer_uri + @doc.search('iframe').attr('src')
+    inner_uri = outer_uri + @doc.search('iframe').attr('src').to_s
     request_parse(inner_uri)
   end
 
@@ -32,7 +32,7 @@ class SFCSFS::Agent
     outer_uri = @base_uri + 
       "/sfc-sfs/portal_s/s02.cgi?id=#{@id}&type=#{@type}&mode=2&lang=ja"
     request_parse(outer_uri)
-    inner_uri = outer_uri + @doc.search('iframe').attr('src')
+    inner_uri = outer_uri + @doc.search('iframe').attr('src').to_s
     request_parse(inner_uri)
   end
 
@@ -46,7 +46,7 @@ class SFCSFS::Agent
         title = nil
         instructor = nil
         #if match = str.match(/：\d+\(.+?\) …\s?(.+?)\s?\((.+?)\)…/)
-        if match = str.match(/：\d+\(.+?\) … (.+?)\s?\(([^\(\)]+?)\)…/)
+        if match = str.match(/：\d+\(.+?\) … (.+?)\s?\(([^\(\)]+?)\)…/u)
           title = match[1]
           instructor = match[2]
         end
@@ -89,8 +89,8 @@ class SFCSFS::Agent
       option[:yc] = q['yc']
       option[:mode] = href.match(/faculty/) ? 'faculty' : 'student'
       title = e.children.first.to_s
-      title.gsub!(/\[([^\]]*)\]$/){option[:place]=$1;""}
-      instructor = e.next.next.to_s.gsub(/[()\s　]/,'')
+      title.gsub!(/\[([^\]]*)\]$/u){option[:place]=$1;""}
+      instructor = e.next.next.to_s.gsub(/[()\s　]/u,'')
       SFCSFS::Lecture.new(self,title,instructor,option)
     end
   end

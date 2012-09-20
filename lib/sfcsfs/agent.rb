@@ -44,7 +44,7 @@ module SFCSFS
     def request_parse uri,method=:get,data={}
       uri = (URI::Generic === uri ? uri : URI.parse(uri))
       r = request(uri,method,data)
-      @doc = Nokogiri.HTML(SFCSFS.convert_encoding r.body)
+      @doc = Nokogiri.HTML(SFCSFS.convert_encoding(r.body),nil,'UTF-8')
       if meta = @doc.search('meta[http-equiv=refresh]').first
         match = meta.attr('content').match(/url=(.*)$/)
         if match
