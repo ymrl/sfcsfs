@@ -48,7 +48,7 @@ module SFCSFS
       uri = @agent.base_uri + class_top_path
       doc = @agent.request_parse(uri)
       @title = doc.search('h3.one').first.children.first.to_s.gsub(/[\s　]/,'')
-      @instructors += doc.search('h3.one > a').to_a.delete_if{|e| !e.attributes['href'].match(/profile\.cgi/)}.map{|e|e.children.first.to_s}
+      @instructors += doc.search('h3.one > a[href]').to_a.delete_if{|e| !e.attr('href').match(/profile\.cgi/)}.map{|e|e.children.first.to_s}
       @instructors.uniq!
       term = doc.search('h3.one .ja').text.match(/時限：(\d{4})年([春秋])学期(.*)$/)
       if term
@@ -72,7 +72,7 @@ module SFCSFS
     def student_selection_list
       uri = @agent.base_uri + student_selection_path
       doc = @agent.request_parse(uri)
-      return doc.search('tr[@bgcolor="#efefef"] td').map{|e| e.children.first.to_s}.delete_if{|e| !e.match(/^\d{8}/)}
+      return doc.search('tr[bgcolor="#efefef"] td').map{|e| e.children.first.to_s}.delete_if{|e| !e.match(/^\d{8}/)}
     end
 
     def get_stay_input_page
