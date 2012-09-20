@@ -45,7 +45,8 @@ class SFCSFS::Agent
         str = e.parent.text
         title = nil
         instructor = nil
-        if match = str.match(/：\d+\(.+?\) … (.+?) \((.+?)\)…/)
+        #if match = str.match(/：\d+\(.+?\) …\s?(.+?)\s?\((.+?)\)…/)
+        if match = str.match(/：\d+\(.+?\) … (.+?)\s?\(([^\(\)]+?)\)…/)
           title = match[1]
           instructor = match[2]
         end
