@@ -62,6 +62,9 @@ module SFCSFS
       @type = nil
       return self
     end
+    def logout
+      request @base_uri + "/sfc-sfs/logout.cgi?id=#{@id}&type=#{@type}&lang=ja"
+    end
 
     def Agent.login(account,passwd,options={})
       a = Agent.new
