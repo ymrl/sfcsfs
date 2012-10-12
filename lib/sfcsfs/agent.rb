@@ -27,7 +27,12 @@ module SFCSFS
         else
           req = Net::HTTP::Get.new(path)
         end
-        req.set_form_data(data) if data.length > 0
+        if data.length > 0
+          data.each_pair do |k,v|
+            data[k] = SFCSFS.convert_encoding_for_send(v)
+          end
+          req.set_form_data(data) 
+        end
         http = Net::HTTP.new(uri.host,uri.port)
         http.use_ssl = true if uri.scheme == 'https'
         http.start{|http| ret = http.request(req)}

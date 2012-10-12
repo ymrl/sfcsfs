@@ -38,6 +38,25 @@ module SFCSFS
       end
       "/sfc-sfs/sfs_class/stay/stay_input.cgi?yc=#{@yc}&ks=#{@ks}&enc_id=#{@agent.id}"
     end
+    
+    def send_stay_form opt
+      get_stay_input_page
+      data = {}
+      @agent.doc.search('form[name=formRoom]').search('input').each do |e|
+        if (n = e.attr('name')) && n.length > 0
+          data[n] = e.attr('value').to_s
+        end
+      end
+      data['stay_phone']      = opt[:phone]
+      data['stay_p_phone']    = opt[:p_phone]
+      data['stay_time']       = opt[:time]
+      data['selectRoom']      = opt[:building]
+      data['selectFloor']     = opt[:floor]
+      data['stay_room_other'] = opt[:room]
+      data['stay_reason']     = opt[:reason]
+      @agent.request @agent.uri + @agent.doc.search('form[name=formRoom]').attr('action').to_s, :post, data
+    end
+
     def student_selection_path
       unless @yc && @agent.id
         raise NotEnoughParamsException

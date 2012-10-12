@@ -4,6 +4,7 @@ $:.unshift(File.dirname(__FILE__)) unless
   
 directory = File.expand_path(File.dirname(__FILE__))
 
+require directory+'/sfcsfs/constants.rb'
 require directory+'/sfcsfs/lecture.rb'
 require directory+'/sfcsfs/homework.rb'
 require directory+'/sfcsfs/util.rb'
