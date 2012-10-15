@@ -13,10 +13,10 @@ module SFCSFS
   end
   def SFCSFS.convert_encoding_for_send str
     if RUBY_VERSION >= "1.9"
-      return str.encode(Encoding::EUC_JP,:invalid=>:replace,:undef=>:replace)
+      return str.to_s.encode(Encoding::EUC_JP,:invalid=>:replace,:undef=>:replace)
     else
       require 'kconv'
-      return Kconv.kconv(str,Kconv::EUC,Kconv::UTF8)
+      return Kconv.kconv(str.to_s,Kconv::EUC,Kconv::UTF8)
     end
   end
 end
