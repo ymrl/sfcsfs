@@ -17,6 +17,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency('nokogiri','~> 1.5.5')
   gem.add_dependency('addressable','~> 2.2.8')
   gem.add_dependency('pit')
+  gem.add_dependency('sfc-room')
   gem.add_dependency('args_parser')
   gem.add_development_dependency('rspec', '~> 2.10.0')
   gem.add_development_dependency('rake')
