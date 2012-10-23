@@ -20,6 +20,7 @@ args = ArgsParser.parse ARGV do
   arg :floor,    "Floor"                
   arg :room,     "Room"                 
   arg :reason,   "Reason"               
+  arg :save,     "Save options to default"
 end
 
 if args.has_option? :help
@@ -47,6 +48,9 @@ end
 required = [ :phone, :p_phone, :time, :building, :floor, :room, :reason]
 required.each{|e| if !args[e] then puts "#{e} is required";exit 1;end}
 
+args[:phone] = "0#{args[:phone]}"     if Fixnum === args[:phone]
+args[:p_phone] = "0#{args[:p_phone]}" if Fixnum === args[:p_phone]
+
 options = {:phone    => args[:phone   ],
            :p_phone  => args[:p_phone ],
            :time     => args[:time    ],
@@ -55,6 +59,10 @@ options = {:phone    => args[:phone   ],
            :room     => args[:room    ],
            :reason   => args[:reason  ],}
 
+if args.has_option?(:save)
+  Pit.set('zanryu',{:data => options})
+end
+
 agent = SFCSFS::Agent.login(SFS_CONFIG[:account],SFS_CONFIG[:password])
 agent.my_schedule.each do |lec|
   if lec.title.match(/#{args[:lecture]}/)
@@ -62,6 +70,3 @@ agent.my_schedule.each do |lec|
     break
   end
 end
-
-
-
