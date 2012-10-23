@@ -1,0 +1,67 @@
+# encoding:UTF-8
+require 'sfcsfs'
+require 'pit'
+require 'sfc-room'
+require 'args_parser'
+
+SFS_CONFIG = Pit.get("sfcsfs", :require => {
+  :account  => "your CNS account",
+  :password => "your CNS password" })
+
+
+args = ArgsParser.parse ARGV do
+  arg :help,     'Help'                 
+  arg :lecture,  'Lecture Name'         
+  arg :phone,    'Phone Number'         
+  arg :p_phone,  "Parents' Phone Number"
+  arg :time,     "Time"                 
+  arg :place,    "Place"                
+  arg :building, "Building"             
+  arg :floor,    "Floor"                
+  arg :room,     "Room"                 
+  arg :reason,   "Reason"               
+end
+
+if args.has_option? :help
+  puts args.help
+end
+
+
+if args[:place]
+  room = SFCRoom.parse(args[:place])
+  args[:building] = args[:building] || room.building_number_for_sfs
+  args[:floor]    = args[:floor]    || room.floor
+  args[:room]     = args[:room]     || room.room
+end
+
+if defaults = Pit.get('zanryu')
+  args[:phone   ] = args[:phone   ] || defaults[:phone   ]
+  args[:p_phone ] = args[:p_phone ] || defaults[:p_phone ]
+  args[:time    ] = args[:time    ] || defaults[:time    ]
+  args[:building] = args[:building] || defaults[:building]
+  args[:floor   ] = args[:floor   ] || defaults[:floor   ]
+  args[:room    ] = args[:room    ] || defaults[:room    ]
+  args[:reason  ] = args[:reason  ] || defaults[:reason  ]
+end
+
+required = [ :phone, :p_phone, :time, :building, :floor, :room, :reason]
+required.each{|e| if !args[e] then puts "#{e} is required";exit 1;end}
+
+options = {:phone    => args[:phone   ],
+           :p_phone  => args[:p_phone ],
+           :time     => args[:time    ],
+           :building => args[:building],
+           :floor    => args[:floor   ],
+           :room     => args[:room    ],
+           :reason   => args[:reason  ],}
+
+agent = SFCSFS::Agent.login(SFS_CONFIG[:account],SFS_CONFIG[:password])
+agent.my_schedule.each do |lec|
+  if lec.title.match(/#{args[:lecture]}/)
+    lec.send_stay_form(options)
+    break
+  end
+end
+
+
+
